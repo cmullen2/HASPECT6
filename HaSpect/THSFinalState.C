@@ -477,7 +477,11 @@ void THSFinalState::CheckTruth(){
   //If we set this correct it would be double counting
   //This can happen when using inclusive topologies
   //And rotate particles that are not in the defined topology
-  fCorrect=0;
+  
+
+
+  //fCorrect=0;
+  if(fCorrect) fGotCorrectOne=kTRUE;
   if(fGotCorrectOne) return;
   //Check if our final vectors match with truth
   fCorrect=1;

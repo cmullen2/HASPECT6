@@ -29,9 +29,6 @@ typedef ROOT::Math::PositionVector3D< ROOT::Math::Cartesian3D< Double32_t >, ROO
 
 typedef ROOT::Math::DisplacementVector3D< ROOT::Math::Cartesian3D< Double_t >, ROOT::Math::DefaultCoordinateSystemTag > HSMomentum;
 
-#pragma link C++ class vector<THSParticle >+;
-#pragma link C++ class vector<THSParticle* >+;
-
 
 class THSParticle {
  private:
@@ -39,6 +36,7 @@ class THSParticle {
   HSLorentzVector fP4;  //4-vector 
   HSLorentzVector fTruthP4;//! true generated 4-vector
   HSPosition fVertex;     //particle vertex position
+  HSPosition fPseudoVertex;     //particle vertex position
   HSPosition fTruthV;//! true generated vertex
   Double32_t fPDGMass=0;
   Double32_t fMeasMass=0; //Or other PID info
@@ -46,9 +44,13 @@ class THSParticle {
   Double32_t fPath=0;
   Double32_t fDoca=0;//!
   Double32_t fEdep=0;
+  Double32_t fEPid=0; //PID Energy
+  Double32_t fEMWPC0=0; //MWPC inner Energy
+  Double32_t fEMWPC1=0; 
   Double32_t fDeltaE=0;
   Double32_t fPreE=0;
-  vector<Double32_t> fHypPList={0,0,0,0,0,0}; //List of corrected momenta for different species hypothesis
+ // vector<Double32_t> fHypPList={0,0,0,0,0,0}; //List of corrected momenta for different species hypothesis
+//Change to deal with not having c++11 for Goat code 
 
   Float_t fTrChi2=0;
   Int_t fNPhot=0;
@@ -57,8 +59,11 @@ class THSParticle {
   Short_t fDetector=0; //detector code
   Short_t fStatus=0;
   Short_t fFiducialCut=1;
-  UShort_t fHypIndex=0;//!
-  std::map<Long64_t,Int_t> gHSParticleHypMap{{11*11,1},{211*211,2},{321*321,3},{2212*2212,4},{2112*2112,4},{22*22,1},{13*13,5}};//!
+ // UShort_t fHypIndex=0;//!
+ // std::map<Long64_t,Int_t> gHSParticleHypMap{{11*11,1},{211*211,2},{321*321,3},{2212*2212,4},{2112*2112,4},{22*22,1},{13*13,5}};//!
+  vector<HSPosition> fMWPC0Hits;
+  vector<HSPosition> fMWPC1Hits;
+
  
   //Allow space for covariance matrix
   //The vector will need decoded into the TMatrix for calculations
@@ -70,22 +75,25 @@ class THSParticle {
   
   
  public:
-  THSParticle()=default;  	        //Constructor
+
+
+  THSParticle(){};  	        //Constructor
   THSParticle(int code);  	        //Constructor
   THSParticle(TString pdgname);  	        //Constructor
-  ~THSParticle()=default;	     	//Destructor
+  ~THSParticle(){};	     	//Destructor
 
 
   //Setting functions
   void SetPDGcode(Int_t code){
     if(TDatabasePDG::Instance()->GetParticle(fPDGCode=code)){
       TParticlePDG* part=TDatabasePDG::Instance()->GetParticle(fPDGCode=code);
-      fPDGMass = part->Mass();}
+      fPDGMass = part->Mass()*1000;}
     else fPDGMass=0;
     //Get Hypothesis index, will by =6 if not predefined
-    fHypIndex=gHSParticleHypMap.find(code*code)->second;
+   // fHypIndex=gHSParticleHypMap.find(code*code)->second;
   }
-  void SetP4(HSLorentzVector v){fP4=v;}
+  void SetP4(HSLorentzVector v){fP4=v;} 
+  void SetP4(TLorentzVector v){fP4.SetXYZT(v.X(),v.Y(),v.Z(),v.T() );}
   void SetVectPDG(HSLorentzVector v){fP4.SetXYZT(v.X(),v.Y(),v.Z(),sqrt(v.P2()+fPDGMass*fPDGMass));}
   void SetP4(HSLorentzVector *v){fP4=*v;}
   void SetXYZT(Double_t X,Double_t Y,Double_t Z,Double_t T){fP4.SetXYZT(X,Y,Z,T);}
@@ -93,12 +101,19 @@ class THSParticle {
   void SetP(Double_t nP){Double_t rp=nP/fP4.P();fP4.SetXYZT(fP4.X()*rp,fP4.Y()*rp,fP4.Z()*rp,sqrt(fP4.M()*fP4.M()+nP*nP));}
   void SetVertex(HSPosition v){fVertex=v;}
   void SetVertex(Double_t X,Double_t Y,Double_t Z){fVertex.SetXYZ(X,Y,Z);}
-  //void SetPol(HSPosition p){fPol=p;}
-  //void SetPol(Double_t X,Double_t Y,Double_t Z){fPol.SetXYZ(X,Y,Z);}
+  void SetPseudoVertex(HSPosition v){fPseudoVertex=v;}
+  void SetPseudoVertex(Double_t X,Double_t Y,Double_t Z){fPseudoVertex.SetXYZ(X,Y,Z);}
+  // void SetPol(HSPosition p){fPol=p;}
+  // void SetPol(Double_t X,Double_t Y,Double_t Z){fPol.SetXYZ(X,Y,Z);}
   void SetTime(Double_t time){fTime=time;};
   void SetPath(Double_t path){fPath=path;};
   void SetDoca(Double_t doca){fDoca=doca;};
   void SetEdep(Double_t edep){fEdep=edep;};
+  void SetEPid(Double_t epid){fEPid=epid;};
+  void SetEMWPC0(Double_t emwpc0){fEMWPC0=emwpc0;};
+  void SetEMWPC1(Double_t emwpc1){fEMWPC1=emwpc1;};
+  void SetMWPC0Hits(vector<HSPosition> mwpc0hits){fMWPC0Hits=mwpc0hits;};
+  void SetMWPC1Hits(vector<HSPosition> mwpc1hits){fMWPC1Hits=mwpc1hits;};
   void SetPreE(Double_t edep){fPreE=edep;};
   void SetTrChi2(Float_t chi2){fTrChi2=chi2;};
   void SetDeltaE(Double_t edep){fDeltaE=edep;};
@@ -108,15 +123,15 @@ class THSParticle {
   void SetFidCut(Int_t fc){fFiducialCut=fc;}
   void SetMeasMass(Double_t mass){fMeasMass=mass;};
 
-  void SetHypPElGam(Double_t pp){fHypPList[1]=pp;};
-  void SetHypPPi(Double_t pp){fHypPList[2]=pp;};
-  void SetHypPK(Double_t pp){fHypPList[3]=pp;};
-  void SetHypPNuc(Double_t pp){fHypPList[4]=pp;};
-  void SetHypPMu(Double_t pp){fHypPList[5]=pp;};
-  void SetHypPMisc(Double_t pp){fHypPList[0]=pp;};
+ // void SetHypPElGam(Double_t pp){fHypPList[1]=pp;};
+ // void SetHypPPi(Double_t pp){fHypPList[2]=pp;};
+ // void SetHypPK(Double_t pp){fHypPList[3]=pp;};
+//  void SetHypPNuc(Double_t pp){fHypPList[4]=pp;};
+  //void SetHypPMu(Double_t pp){fHypPList[5]=pp;};
+ // void SetHypPMisc(Double_t pp){fHypPList[0]=pp;};
 
   void TakePDGMass(){SetVectPDG(fP4);}; //Preserves momentum
-  void TakeCorrectedP(){if(fHypIndex==gHSParticleHypMap.size()) return; Double_t rho0=fP4.P();Double_t rho=fHypPList[fHypIndex];if(!rho) return; rho/=rho0;fP4.SetXYZT(fP4.X()*rho,fP4.Y()*rho,fP4.Z()*rho,fP4.E());SetVectPDG(fP4);};
+  //void TakeCorrectedP(){if(fHypIndex==gHSParticleHypMap.size()) return; Double_t rho0=fP4.P();Double_t rho=fHypPList[fHypIndex];if(!rho) return; rho/=rho0;fP4.SetXYZT(fP4.X()*rho,fP4.Y()*rho,fP4.Z()*rho,fP4.E());SetVectPDG(fP4);};
   void TakePDGMassFromE(){Double_t rho0=fP4.P();Double_t rho=sqrt(fP4.E()*fP4.E()-fPDGMass*fPDGMass);rho/=rho0;fP4.SetXYZT(fP4.X()*rho,fP4.Y()*rho,fP4.Z()*rho,fP4.E());}; //preserves energy
   // void CreateTruth(){fTruth=new THSParticle();};
   void SetTruth(THSParticle* part){fTruthP4=part->P4();fTruthV=part->Vertex();fTruthPDG=part->PDG();};
@@ -126,12 +141,18 @@ class THSParticle {
   HSLorentzVector P4(){return fP4;}
   HSLorentzVector* P4p(){return &fP4;}
   HSPosition Vertex(){return fVertex;}
+  HSPosition PseudoVertex(){return fPseudoVertex;}
   //HSPosition Pol(){return fPol;}
    Double_t PDGMass(){return fPDGMass;}
   Double_t MeasMass(){return fMeasMass;}
   Double_t Time(){return fTime;}
   Double_t MassDiff(){return fPDGMass-fMeasMass;}
   Double_t Edep(){return fEdep;}
+  Double_t EPid(){return fEPid;}
+  Double_t EMWPC0(){return fEMWPC0;}
+  Double_t EMWPC1(){return fEMWPC1;}
+  vector<HSPosition> MWPC0Hits(){return fMWPC0Hits;}
+  vector<HSPosition> MWPC1Hits(){return fMWPC1Hits;}
   Double_t PreE(){return fPreE;}
   Double_t DeltaE(){return fDeltaE;}
   Double_t Doca(){return fDoca;}
@@ -214,19 +235,27 @@ inline void THSParticle::Clear(){
   fEdep=0;
   fDeltaE=0;
   fPreE=0;
-  for(UInt_t ip=0;ip<5;ip++)
-    fHypPList.at(ip)=0;
+ // for(UInt_t ip=0;ip<5;ip++)
+  //  fHypPList.at(ip)=0;
   fTrChi2=0;
   fNPhot=0;
   fPDGCode=0;           //PDG number
   fTruthPDG=0;//! true PDG code
   fDetector=0; //detector code
   fFiducialCut=1;
-  fHypIndex=0;
+ // fHypIndex=0;
+  fEPid=0; //PID Energy
+  fEMWPC0=0; //MWPC inner Energy
+  fEMWPC1=0;
+  fPseudoVertex.SetXYZ(0,0,0);     //particle vertex position
+  fVertex.SetXYZ(0,0,0);     //particle vertex position
+  fMWPC0Hits.clear();
+  fMWPC1Hits.clear();
 
 }
 inline void THSParticle::MinorClear(){
   fP4.SetXYZT(0,0,0,0);
+  fTruthP4.SetXYZT(0,0,0,0);
   fMeasMass=0; //Or other PID info
   fTime=0;
   fPath=0;
@@ -234,15 +263,26 @@ inline void THSParticle::MinorClear(){
   fEdep=0;
   fDeltaE=0;
   fPreE=0;
-  for(UInt_t ip=0;ip<5;ip++)
-    fHypPList.at(ip)=0;
+ // for(UInt_t ip=0;ip<5;ip++)
+ //   fHypPList.at(ip)=0;
   fTrChi2=0;
   fNPhot=0;
   fDetector=0; //detector code
   fFiducialCut=1;
+  fEPid=0; //PID Energy
+  fEMWPC0=0; //MWPC inner Energy
+  fEMWPC1=0;
+  fPseudoVertex.SetXYZ(0,0,0);     //particle vertex position
+  fVertex.SetXYZ(0,0,0);     //particle vertex position
+  fMWPC0Hits.clear();
+  fMWPC1Hits.clear();
  }
 
 //inline bool THSParticle::operator<( const THSParticle& rhs ) {cout<<" "<<rhs.fP4.Rho()<<endl;return fP4.Rho() < rhs.fP4.Rho(); }
 //inline bool THSParticle::operator<( const THSParticle& rhs ) {cout<<" "<<rhs.fP4.Rho()<<endl;return this->fP4.Rho() < rhs.fP4.Rho(); }
 //inline bool THSParticle::IsFaster( const THSParticle& lhs,const THSParticle& rhs ) {cout<<" "<<rhs.fP4.Rho()<<endl;return lhs.fP4.Rho() < rhs.fP4.Rho(); }
+
+#pragma link C++ class vector<THSParticle >+;
+#pragma link C++ class vector<THSParticle* >+;
+
 #endif

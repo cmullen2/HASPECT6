@@ -8,18 +8,18 @@
 class THSEventInfo{
 
  public :
-  THSEventInfo()=default;
-  ~THSEventInfo()=default;
+  THSEventInfo(){};
+  ~THSEventInfo(){};
   
  protected :
   Long_t fTrigBit=0;
   Float_t fCJSTTime=0;//COATJAVA defined starttime
   Float_t fRFTime=0;//RF Time (ns)
   Float_t fBeamPol=0; //helicity polarisation of beam
-  Float_t fTarPol=0; //!helicity polarisation of beam
+  Float_t fTarPol=0; //helicity polarisation of beam
   Int_t fNEvent=0;//Event Number
   Short_t fBeamHel=0; //helcity direction of beam
-  Short_t fTarPolDir=0; //!helcity direction of beam
+  Short_t fTarPolDir=0; //helcity direction of beam
 
 
  public:
